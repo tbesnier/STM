@@ -148,9 +148,7 @@ def test(args):
             faces_template = sample[0][7].to(args.device)
             normals, normals_template = sample[0][8].to(args.device), sample[0][9].to(args.device)
             feats = sample[0][10].to(args.device)
-            print(feats.shape)
             feats_template = sample[0][11].to(args.device)
-            print(name)
 
             in_features = torch.cat((vertices, normals), dim=2)
             in_features_template = torch.cat((template, normals_template), dim=2)
@@ -179,9 +177,9 @@ def test(args):
 def main():
     parser = argparse.ArgumentParser(description='D2D: Dense to Dense Encoder-Decoder')
 
-    parser.add_argument("--lr", type=float, default=0.00005, help='learning rate')
+    parser.add_argument("--lr", type=float, default=0.00001, help='learning rate')
     parser.add_argument('--weight_decay', type=float, default=0)
-    parser.add_argument('--epochs', type=float, default=500)
+    parser.add_argument('--epochs', type=float, default=1000)
     parser.add_argument('--batch_size', type=float, default=1)
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--device', type=str, default="cuda:0")
