@@ -177,9 +177,9 @@ def test(args):
 def main():
     parser = argparse.ArgumentParser(description='D2D: Dense to Dense Encoder-Decoder')
 
-    parser.add_argument("--lr", type=float, default=0.00001, help='learning rate')
+    parser.add_argument("--lr", type=float, default=0.0001, help='learning rate')
     parser.add_argument('--weight_decay', type=float, default=0)
-    parser.add_argument('--epochs', type=float, default=1000)
+    parser.add_argument('--epochs', type=float, default=500)
     parser.add_argument('--batch_size', type=float, default=1)
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--device', type=str, default="cuda:0")
@@ -187,7 +187,7 @@ def main():
     # data args
     parser.add_argument('--template_file', type=str,
                         default='./data/template.obj')
-    parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
+    parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse_small')
     parser.add_argument('--meshes_path_remesh', type=str, default='../datasets/COMA_exp_sparse_rmsh')
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA")
