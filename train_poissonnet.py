@@ -190,9 +190,9 @@ def main():
     parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
     parser.add_argument('--meshes_path_remesh', type=str, default='../datasets/COMA_exp_sparse_rmsh')
 
-    parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA")
+    parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA")
     parser.add_argument('--val_subjects', type=str, default="FaceTalk_170725_00137_TA")
-    parser.add_argument('--test_subjects', type=str, default="FaceTalk_170725_00137_TA")
+    parser.add_argument('--test_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA")
     parser.add_argument('--results_path', type=str, default="../Data/STM/test")
 
     # checkpoint args

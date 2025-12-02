@@ -4,8 +4,85 @@ import _pickle as pickle
 
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  # needed for 3D plots
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (needed for 3D projection)
+
+def show_point_cloud_with_edges(points,
+                                edges,
+                                point_size=5,
+                                edge_width=1.0,
+                                point_color="tab:blue",
+                                edge_color="tab:gray",
+                                equal_axes=True):
+    """
+    Display a 3D point cloud and edges.
+
+    Parameters
+    ----------
+    points : (N, 3) array-like
+        Array of point positions (x, y, z).
+    edges : (M, 2) array-like of int
+        Each row [i, j] indicates an edge between points[i] and points[j].
+    point_size : float, optional
+        Size of the points in the scatter plot.
+    edge_width : float, optional
+        Line width of the edges.
+    point_color : str or array-like, optional
+        Color for the points (any Matplotlib color).
+    edge_color : str or array-like, optional
+        Color for the edges (any Matplotlib color).
+    equal_axes : bool, optional
+        If True, sets equal scale on x, y, z axes.
+    """
+    points = np.asarray(points)
+    edges = np.asarray(edges, dtype=int)
+
+    if points.ndim != 2 or points.shape[1] != 3:
+        raise ValueError("points must be of shape (N, 3)")
+    if edges.ndim != 2 or edges.shape[1] != 2:
+        raise ValueError("edges must be of shape (M, 2) with integer indices")
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Plot points
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2],
+               s=point_size, c=point_color)
+
+    # Plot edges
+    for i, j in edges:
+        xs = [points[i, 0], points[j, 0]]
+        ys = [points[i, 1], points[j, 1]]
+        zs = [points[i, 2], points[j, 2]]
+        ax.plot(xs, ys, zs, linewidth=edge_width, color=edge_color)
+
+    # Optionally set equal aspect ratio
+    if equal_axes:
+        _set_equal_3d_axes(ax, points)
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def _set_equal_3d_axes(ax, points):
+    """
+    Set equal aspect ratio for a 3D axis based on the extent of the points.
+    """
+    x_min, y_min, z_min = points.min(axis=0)
+    x_max, y_max, z_max = points.max(axis=0)
+
+    max_range = max(x_max - x_min, y_max - y_min, z_max - z_min) / 2.0
+    mid_x = (x_max + x_min) * 0.5
+    mid_y = (y_max + y_min) * 0.5
+    mid_z = (z_max + z_min) * 0.5
+
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
 def show_point_cloud(points):
     """
@@ -40,77 +117,6 @@ def show_point_cloud(points):
 
     plt.show()
 
-def show_point_cloud_with_mesh(points,
-                               vertices=None,
-                               faces=None,
-                               point_size=15,
-                               mesh_alpha=0.2):
-    """
-    Display a 3D point cloud and (optionally) a triangular mesh.
-
-    Parameters
-    ----------
-    points : (N, 3) array
-        Point cloud.
-    vertices : (V, 3) array, optional
-        Mesh vertex positions.
-    faces : (F, 3) int array, optional
-        Mesh triangle indices (each row: indices into `vertices`).
-    point_size : float
-        Size of the points in the scatter plot.
-    mesh_alpha : float
-        Transparency of the mesh (0 = fully transparent, 1 = opaque).
-    """
-    points = np.asarray(points)
-    assert points.shape[1] == 3, "points should have shape (N, 3)"
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    # --- Plot point cloud ---
-    ax.scatter(points[:, 0], points[:, 1], points[:, 2],
-               s=point_size, depthshade=True)
-
-    # --- Plot mesh if given ---
-    if vertices is not None and faces is not None:
-        vertices = np.asarray(vertices)
-        faces = np.asarray(faces, dtype=int)
-        assert vertices.shape[1] == 3, "vertices should have shape (V, 3)"
-        assert faces.shape[1] == 3, "faces should have shape (F, 3) for triangles"
-
-        # Build a list of triangle vertex coordinates
-        tri_verts = vertices[faces]  # (F, 3, 3)
-
-        mesh = Poly3DCollection(tri_verts,
-                                alpha=mesh_alpha,
-                                facecolor='cyan',
-                                edgecolor='k',
-                                linewidths=0.2)
-        ax.add_collection3d(mesh)
-
-    # Labels and title
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_title('3D Point Cloud with Mesh')
-
-    # --- Equal aspect ratio for all axes ---
-    all_pts = points
-    if vertices is not None:
-        all_pts = np.vstack([points, vertices])
-
-    x, y, z = all_pts[:, 0], all_pts[:, 1], all_pts[:, 2]
-    max_range = np.ptp(all_pts, axis=0).max()
-    mid_x = (x.max() + x.min()) / 2
-    mid_y = (y.max() + y.min()) / 2
-    mid_z = (z.max() + z.min()) / 2
-
-    ax.set_xlim(mid_x - max_range/2, mid_x + max_range/2)
-    ax.set_ylim(mid_y - max_range/2, mid_y + max_range/2)
-    ax.set_zlim(mid_z - max_range/2, mid_z + max_range/2)
-
-    plt.tight_layout()
-    plt.show()
 
 def load_static_embedding(static_embedding_path):
     with open(static_embedding_path, 'rb') as f:
@@ -198,10 +204,6 @@ def closest_points_indices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     # Return as (M, 1)
     return idx
 
-def get_landmarks_no_eyes(vertices):
-
-    return []
-
 
 if __name__ == "__main__":
     template_mesh = trimesh.load('./data/template.obj', process=False)
@@ -211,14 +213,23 @@ if __name__ == "__main__":
     exp_mesh = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_full/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
 
     lmk_neutral = get_landmarks(neutral_mesh.vertices)
-    print(lmk_neutral.shape)
-    show_point_cloud(lmk_neutral)
+    #print(lmk_neutral.shape)
+    #show_point_cloud(lmk_neutral)
     #show_point_cloud_with_mesh(lmk_neutral, neutral_mesh.vertices, neutral_mesh.faces)
 
     lmk_neutral_no_eyes_idx = closest_points_indices(np.array(neutral_mesh_no_eyes.vertices), lmk_neutral)
     np.save("./data/lmk_noeyes_idx", lmk_neutral_no_eyes_idx)
     lmk_neutral_no_eyes = np.array(neutral_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
-    show_point_cloud(lmk_neutral_no_eyes)
+    edges = np.array([
+        [0, 1], [1, 2], [2,3], [3,4], [4,5], [5,6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16],
+        [17, 18], [18, 19], [19, 20], [20, 21], [22, 23], [23, 24], [24, 25], [25, 26],
+        [27, 28], [28, 29], [29, 30], [31, 32], [32, 33], [33, 34], [34, 35],
+        [36, 37], [37, 38], [38, 39], [39, 40], [40, 41], [41, 36],
+        [42, 43], [43, 44], [44, 45], [45, 46], [46, 47], [47, 42],
+        [48, 49], [49, 50], [50, 51], [51, 52], [52, 53], [53, 54], [54, 55], [55, 56], [56, 57], [57, 58], [58, 59], [59, 60], [60, 48],
+        [60, 61], [61, 62], [62, 63], [63, 64], [64, 65], [65, 66], [66, 67], [67, 60]
+    ])
+    show_point_cloud_with_edges(lmk_neutral_no_eyes, edges)
     #show_point_cloud_with_mesh(lmk_neutral_no_eyes, neutral_mesh_no_eyes.vertices, neutral_mesh_no_eyes.faces)
 
     #delta_lmk = get_landmarks(exp_mesh.vertices) - get_landmarks(neutral_mesh.vertices)

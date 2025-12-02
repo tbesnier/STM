@@ -110,7 +110,7 @@ class PoissonNetAutoencoder(nn.Module):
                                             extra_features=0,
                                             outputs_at="faces")
         # decoder
-        self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, self.latent_channels + 204), args=args)
+        self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, self.latent_channels*2), args=args)
 
         # self.last_layer = nn.Linear(128, 3)
         # self.layers = [nn.Linear(self.latent_channels + 204, 128),
@@ -122,7 +122,7 @@ class PoissonNetAutoencoder(nn.Module):
         #                    self.last_layer]
         # self.mlp_dec = nn.Sequential(*self.layers)
 
-        #self.encoder_lmk = PNEncoder(in_features=3, hidden_dim=128, out_dim=self.latent_channels)
+        self.encoder_lmk = PNEncoder(in_features=3, hidden_dim=128, out_dim=self.latent_channels)
 
         #print("encoder parameters: ", count_parameters(self.encoder))
         #print("decoder parameters: ", count_parameters(self.decoder))
@@ -137,15 +137,15 @@ class PoissonNetAutoencoder(nn.Module):
                                   faces=faces_template)
 
         # PC encoding
-        # z_lmk = feats.squeeze(0)
-        # z_lmk = self.encoder_lmk(z_lmk)
-        # z = z_lmk.unsqueeze(1).expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
-        # feat_field = torch.cat((z_template, z), dim=-1)
-
-        # Brute concatenation
-        z_lmk = feats.reshape((-1)).unsqueeze(0)
+        z_lmk = feats.squeeze(0)
+        z_lmk = self.encoder_lmk(z_lmk)
         z = z_lmk.unsqueeze(1).expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
         feat_field = torch.cat((z_template, z), dim=-1)
+
+        # Brute concatenation
+        #z_lmk = feats.reshape((-1)).unsqueeze(0)
+        #z = z_lmk.unsqueeze(1).expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
+        #feat_field = torch.cat((z_template, z), dim=-1)
 
         # MLP decoder
         #delta = self.mlp_dec(feat_field)
