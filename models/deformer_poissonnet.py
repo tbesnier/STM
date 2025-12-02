@@ -112,23 +112,23 @@ class PoissonNetAutoencoder(nn.Module):
         # decoder
         self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, self.latent_channels + 204), args=args)
 
-        self.last_layer = nn.Linear(128, 3)
-        self.layers = [nn.Linear(self.latent_channels + 204, 128),
-                           nn.ReLU(),
-                           nn.Linear(128, 128),
-                           nn.ReLU(),
-                           nn.Linear(128, 128),
-                           nn.ReLU(),
-                           self.last_layer]
-        self.mlp_dec = nn.Sequential(*self.layers)
+        # self.last_layer = nn.Linear(128, 3)
+        # self.layers = [nn.Linear(self.latent_channels + 204, 128),
+        #                    nn.ReLU(),
+        #                    nn.Linear(128, 128),
+        #                    nn.ReLU(),
+        #                    nn.Linear(128, 128),
+        #                    nn.ReLU(),
+        #                    self.last_layer]
+        # self.mlp_dec = nn.Sequential(*self.layers)
 
         #self.encoder_lmk = PNEncoder(in_features=3, hidden_dim=128, out_dim=self.latent_channels)
 
         #print("encoder parameters: ", count_parameters(self.encoder))
         #print("decoder parameters: ", count_parameters(self.decoder))
 
-        nn.init.constant_(self.last_layer.weight, 0)
-        nn.init.constant_(self.last_layer.bias, 0)
+        #nn.init.constant_(self.last_layer.weight, 0)
+        #nn.init.constant_(self.last_layer.bias, 0)
 
     def forward_latent_njf(self, template, vertices,
                 mass_template, solver_template, G_template, M_template, faces_template, feats, feats_temp):

@@ -66,6 +66,8 @@ def read_data(args, flag=None):
     solver_template_dict = {}
     G_template_dict = {}
     M_template_dict = {}
+    lmk_idx = np.load("./data/lmk_noeyes_idx.npy")
+    print(lmk_idx.shape)
 
     for r, ds, fs in os.walk(meshes_path):
         for f in tqdm(fs):
@@ -77,7 +79,7 @@ def read_data(args, flag=None):
 
                 template_mesh = trimesh.load(f"{meshes_path}/{subject_id}_neutral_no_eyes.ply", process=False)
                 temp = np.array(template_mesh.vertices)
-                lmk_template = Get_landmarks.get_landmarks(temp)#.reshape((-1))
+                lmk_template = temp[lmk_idx]#Get_landmarks.get_landmarks(temp)#.reshape((-1))
 
                 ms = pymeshlab.MeshSet()
                 mesh = pymeshlab.Mesh(vertex_matrix = temp, face_matrix = template_mesh.faces)
@@ -115,7 +117,7 @@ def read_data(args, flag=None):
                     mesh = trimesh.load(vertices_path_)
                     vertices = np.array(mesh.vertices)
                     faces = np.array(mesh.faces)
-                    def_landmarks = Get_landmarks.get_landmarks(vertices)
+                    def_landmarks = vertices[lmk_idx]#Get_landmarks.get_landmarks(vertices)
                     ms = pymeshlab.MeshSet()
                     mesh = pymeshlab.Mesh(vertex_matrix=vertices, face_matrix=faces)
                     ms.add_mesh(mesh)
