@@ -79,7 +79,7 @@ class SimpleBatchedGNN(nn.Module):
     def forward(self, x, edge_index):
         x = self.gnn1(x, edge_index)
         x = self.gnn2(x, edge_index)
-        x, _ = torch.max(x, dim=1)
+        #x, _ = torch.max(x, dim=1)
         return x  # (B, N, hidden_dim2)
 
 class PNEncoder(nn.Module):
@@ -119,48 +119,94 @@ class PNEncoder(nn.Module):
         x, _ = torch.max(x, dim=0)  # shape: (B, out_dim)
         return x.unsqueeze(0)
 
-class AtoMWithAttention(nn.Module):
-    def __init__(self, f, num_heads=4):
+class LandmarkToMeshCrossAttention(nn.Module):
+    """
+    Cross-attention from landmark/node features to mesh/vertex features.
+
+    Inputs:
+        vertex_feats: (B, m, f_v)   # mesh vertex-wise features
+        node_feats:   (B, l, f_n)   # landmark/node-wise features
+
+    Output:
+        augmented_vertex_feats: (B, m, f_v + f_out)
+            where f_out is the dimension of the new features coming from attention.
+    """
+
+    def __init__(
+        self,
+        dim_vertex: int,   # f_v
+        dim_node: int,     # f_n
+        out_dim: int,      # f_out (dimension of new features from attention)
+        num_heads: int = 4,
+        dropout: float = 0.0,
+    ):
         super().__init__()
-        # Map A's 3-dim features to the same dim as B (f)
-        self.a_proj = nn.Linear(3, f)
-        # Cross-attention: queries from B, keys/values from A
-        self.attn = nn.MultiheadAttention(
-            embed_dim=f,
-            num_heads=num_heads,
-            batch_first=True,  # requires PyTorch >= 1.10
-        )
 
-    def forward(self, A, B):
+        assert out_dim % num_heads == 0, "out_dim must be divisible by num_heads."
+        self.dim_vertex = dim_vertex
+        self.dim_node = dim_node
+        self.out_dim = out_dim
+        self.num_heads = num_heads
+        self.head_dim = out_dim // num_heads
+
+        # Linear projections for Q, K, V
+        self.q_proj = nn.Linear(dim_vertex, out_dim)
+        self.k_proj = nn.Linear(dim_node, out_dim)
+        self.v_proj = nn.Linear(dim_node, out_dim)
+
+        # Final projection on the attention output
+        self.out_proj = nn.Linear(out_dim, out_dim)
+
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, vertex_feats: torch.Tensor, node_feats: torch.Tensor) -> torch.Tensor:
         """
-        A: [n, 3]
-        B: [m, f]
-        returns:
-            C:   [m, 2f]  (concat of attended A and B)
-            A_m: [m, f]   (A mapped to m positions)
+        vertex_feats: (B, m, f_v)
+        node_feats:   (B, l, f_n)
+
+        Returns:
+            augmented_vertex_feats: (B, m, f_v + f_out)
         """
-        # 1) Project A to f-dim
-        A_proj = self.a_proj(A)        # [n, f]
+        # Ensure we have batch dimension; if not, you can add it outside.
+        B, m, _ = vertex_feats.shape
+        B2, l, _ = node_feats.shape
+        assert B == B2, "Batch size mismatch between vertex_feats and node_feats."
 
-        # 2) Add batch dimension for MultiheadAttention
-        A_proj = A_proj.unsqueeze(0)   # [1, n, f]  -> keys/values
-        B_in   = B.unsqueeze(0)        # [1, m, f]  -> queries
+        # Project to Q, K, V
+        # Q: (B, m, out_dim), K,V: (B, l, out_dim)
+        Q = self.q_proj(vertex_feats)
+        K = self.k_proj(node_feats)
+        V = self.v_proj(node_feats)
 
-        # 3) Cross-attention: each B_j attends over all A_i
-        #    output: [1, m, f]
-        A_m, attn_weights = self.attn(
-            query=B_in,
-            key=A_proj,
-            value=A_proj
-        )
+        # Reshape for multi-head:
+        # (B, m, h*d) -> (B, h, m, d)
+        def split_heads(x):
+            return x.view(B, -1, self.num_heads, self.head_dim).transpose(1, 2)
 
-        # 4) Remove batch dimension
-        A_m = A_m.squeeze(0)           # [m, f]
+        Q = split_heads(Q)  # (B, h, m, d_head)
+        K = split_heads(K)  # (B, h, l, d_head)
+        V = split_heads(V)  # (B, h, l, d_head)
 
-        # 5) Concatenate along feature dimension
-        C = torch.cat([A_m, B], dim=-1)  # [m, 2f]
+        # Scaled dot-product attention
+        # scores: (B, h, m, l)
+        scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        attn = torch.softmax(scores, dim=-1)
+        attn = self.dropout(attn)
 
-        return C, A_m, attn_weights.squeeze(0)
+        # Weighted sum of values
+        # context: (B, h, m, d_head)
+        context = torch.matmul(attn, V)
+
+        # Merge heads: (B, h, m, d_head) -> (B, m, h*d_head = out_dim)
+        context = context.transpose(1, 2).contiguous().view(B, m, self.out_dim)
+
+        # Final linear projection
+        new_feats = self.out_proj(context)  # (B, m, out_dim)
+
+        # Concatenate with original vertex features: (B, m, f_v + out_dim)
+        augmented_vertex_feats = torch.cat([vertex_feats, new_feats], dim=-1)
+
+        return augmented_vertex_feats
 
 
 class PoissonNetAutoencoder(nn.Module):
@@ -210,8 +256,13 @@ class PoissonNetAutoencoder(nn.Module):
         #self.encoder_lmk = PNEncoder(in_features=3, hidden_dim=128, out_dim=self.latent_channels)
         self.encoder_lmk = SimpleBatchedGNN(hidden_dim1=128, hidden_dim2=32)
 
-        #print("encoder parameters: ", count_parameters(self.encoder))
-        #print("decoder parameters: ", count_parameters(self.decoder))
+        self.ca = LandmarkToMeshCrossAttention(
+            dim_vertex=self.latent_channels,
+            dim_node=32,
+            out_dim=32,
+            num_heads=4,
+            dropout=0.0,
+        )
 
         #nn.init.constant_(self.last_layer.weight, 0)
         #nn.init.constant_(self.last_layer.bias, 0)
@@ -225,8 +276,9 @@ class PoissonNetAutoencoder(nn.Module):
         # PC encoding
         z_lmk = feats.squeeze(0)
         z_lmk = self.encoder_lmk(z_lmk, self.edges)
-        z = z_lmk.expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
-        feat_field = torch.cat((z_template, z), dim=-1)
+        feat_field = self.ca(z_template, z_lmk)
+        #z = z_lmk.expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
+        #feat_field = torch.cat((z_template, z), dim=-1)
 
         # Brute concatenation
         #z_lmk = feats.reshape((-1)).unsqueeze(0)
