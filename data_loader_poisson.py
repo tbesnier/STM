@@ -79,18 +79,19 @@ def read_data(args, flag=None):
 
                 template_mesh = trimesh.load(f"{meshes_path}/{subject_id}_neutral_no_eyes.ply", process=False)
                 temp = np.array(template_mesh.vertices)
+                faces_temp = np.array(template_mesh.faces)
                 lmk_template = temp[lmk_idx]#Get_landmarks.get_landmarks(temp)#.reshape((-1))
 
-                ms = pymeshlab.MeshSet()
-                mesh = pymeshlab.Mesh(vertex_matrix = temp, face_matrix = template_mesh.faces)
-                ms.add_mesh(mesh)
-
-                ms.compute_selection_by_small_disconnected_components_per_face(nbfaceratio = 0.3)
-                ms.meshing_remove_selected_vertices_and_faces()
-
-                temp = ms.current_mesh().vertex_matrix()
-                faces_temp = ms.current_mesh().face_matrix()
-                template_mesh = trimesh.Trimesh(temp, faces_temp)
+                # ms = pymeshlab.MeshSet()
+                # mesh = pymeshlab.Mesh(vertex_matrix = temp, face_matrix = template_mesh.faces)
+                # ms.add_mesh(mesh)
+                #
+                # ms.compute_selection_by_small_disconnected_components_per_face(nbfaceratio = 0.3)
+                # ms.meshing_remove_selected_vertices_and_faces()
+                #
+                # temp = ms.current_mesh().vertex_matrix()
+                # faces_temp = ms.current_mesh().face_matrix()
+                # template_mesh = trimesh.Trimesh(temp, faces_temp)
 
                 data[key]["template"] = temp
                 normals_template = np.array(template_mesh.vertex_normals)
@@ -118,14 +119,13 @@ def read_data(args, flag=None):
                     vertices = np.array(mesh.vertices)
                     faces = np.array(mesh.faces)
                     def_landmarks = vertices[lmk_idx]#Get_landmarks.get_landmarks(vertices)
-                    ms = pymeshlab.MeshSet()
-                    mesh = pymeshlab.Mesh(vertex_matrix=vertices, face_matrix=faces)
-                    ms.add_mesh(mesh)
-                    ms.compute_selection_by_small_disconnected_components_per_face(nbfaceratio=0.3)
-                    ms.meshing_remove_selected_vertices_and_faces()
-
-                    vertices = ms.current_mesh().vertex_matrix()
-                    faces = ms.current_mesh().face_matrix()
+                    # ms = pymeshlab.MeshSet()
+                    # mesh = pymeshlab.Mesh(vertex_matrix=vertices, face_matrix=faces)
+                    # ms.add_mesh(mesh)
+                    # ms.compute_selection_by_small_disconnected_components_per_face(nbfaceratio=0.3)
+                    # ms.meshing_remove_selected_vertices_and_faces()
+                    #vertices = ms.current_mesh().vertex_matrix()
+                    #faces = ms.current_mesh().face_matrix()
                     mesh = trimesh.Trimesh(vertices, faces)
                     data[key]["vertices"] = vertices
                     data[key]["normals"] = np.array(mesh.vertex_normals)

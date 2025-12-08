@@ -241,7 +241,7 @@ class PoissonNetAutoencoder(nn.Module):
                                             extra_features=0,
                                             outputs_at="faces")
         # decoder
-        self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, self.latent_channels + 32), args=args)
+        self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, self.latent_channels + 204), args=args)
 
         # self.last_layer = nn.Linear(128, 3)
         # self.layers = [nn.Linear(self.latent_channels + 204, 128),
@@ -254,15 +254,9 @@ class PoissonNetAutoencoder(nn.Module):
         # self.mlp_dec = nn.Sequential(*self.layers)
 
         #self.encoder_lmk = PNEncoder(in_features=3, hidden_dim=128, out_dim=self.latent_channels)
-        self.encoder_lmk = SimpleBatchedGNN(hidden_dim1=128, hidden_dim2=32)
+        #self.encoder_lmk = SimpleBatchedGNN(hidden_dim1=128, hidden_dim2=32)
 
-        self.ca = LandmarkToMeshCrossAttention(
-            dim_vertex=self.latent_channels,
-            dim_node=32,
-            out_dim=32,
-            num_heads=4,
-            dropout=0.0,
-        )
+        #self.ca = LandmarkToMeshCrossAttention(dim_vertex=self.latent_channels,dim_node=32,out_dim=32,num_heads=4,dropout=0.0)
 
         #nn.init.constant_(self.last_layer.weight, 0)
         #nn.init.constant_(self.last_layer.bias, 0)
@@ -274,16 +268,16 @@ class PoissonNetAutoencoder(nn.Module):
                                   faces=faces_template)
 
         # PC encoding
-        z_lmk = feats.squeeze(0)
-        z_lmk = self.encoder_lmk(z_lmk, self.edges)
-        feat_field = self.ca(z_template, z_lmk)
+        #z_lmk = feats.squeeze(0)
+        #z_lmk = self.encoder_lmk(z_lmk, self.edges)
+        #feat_field = self.ca(z_template, z_lmk)
         #z = z_lmk.expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
         #feat_field = torch.cat((z_template, z), dim=-1)
 
         # Brute concatenation
-        #z_lmk = feats.reshape((-1)).unsqueeze(0)
-        #z = z_lmk.unsqueeze(1).expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
-        #feat_field = torch.cat((z_template, z), dim=-1)
+        z_lmk = feats.reshape((-1)).unsqueeze(0)
+        z = z_lmk.unsqueeze(1).expand((z_template.shape[0], z_template.shape[1], z_lmk.shape[-1]))
+        feat_field = torch.cat((z_template, z), dim=-1)
 
         # MLP decoder
         #delta = self.mlp_dec(feat_field)

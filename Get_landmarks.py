@@ -13,7 +13,7 @@ def show_point_cloud_with_edges(points,
                                 edge_width=1.0,
                                 point_color="tab:blue",
                                 edge_color="tab:gray",
-                                equal_axes=True):
+                                equal_axes=True, target_points=None):
     """
     Display a 3D point cloud and edges.
 
@@ -47,7 +47,11 @@ def show_point_cloud_with_edges(points,
 
     # Plot points
     ax.scatter(points[:, 0], points[:, 1], points[:, 2],
-               s=point_size, c=point_color)
+               s=point_size, c="red")
+
+    if target_points is not None:
+        ax.quiver3D(points[:, 0],points[:, 1], points[:,2],
+                    target_points[:, 0], target_points[:, 1], target_points[:, 2])
 
     # Plot edges
     for i, j in edges:
@@ -63,6 +67,10 @@ def show_point_cloud_with_edges(points,
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
+    ax.grid(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
 
     plt.tight_layout()
     plt.show()
@@ -210,7 +218,7 @@ if __name__ == "__main__":
 
     neutral_mesh = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_full/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
     neutral_mesh_no_eyes = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
-    exp_mesh = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_full/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
+    exp_mesh_no_eyes = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
 
     lmk_neutral = get_landmarks(neutral_mesh.vertices)
     #print(lmk_neutral.shape)
@@ -220,6 +228,7 @@ if __name__ == "__main__":
     lmk_neutral_no_eyes_idx = closest_points_indices(np.array(neutral_mesh_no_eyes.vertices), lmk_neutral)
     np.save("./data/lmk_noeyes_idx", lmk_neutral_no_eyes_idx)
     lmk_neutral_no_eyes = np.array(neutral_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
+    lmk_exp_no_eyes = np.array(exp_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
     edges = np.array([
         [0, 1], [1, 2], [2,3], [3,4], [4,5], [5,6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16],
         [17, 18], [18, 19], [19, 20], [20, 21], [22, 23], [23, 24], [24, 25], [25, 26],
@@ -229,7 +238,7 @@ if __name__ == "__main__":
         [48, 49], [49, 50], [50, 51], [51, 52], [52, 53], [53, 54], [54, 55], [55, 56], [56, 57], [57, 58], [58, 59], [59, 60], [60, 48],
         [60, 61], [61, 62], [62, 63], [63, 64], [64, 65], [65, 66], [66, 67], [67, 60]
     ])
-    show_point_cloud_with_edges(lmk_neutral_no_eyes, edges)
+    show_point_cloud_with_edges(lmk_neutral_no_eyes, edges, point_size=15, target_points=lmk_exp_no_eyes - lmk_neutral_no_eyes)
     #show_point_cloud_with_mesh(lmk_neutral_no_eyes, neutral_mesh_no_eyes.vertices, neutral_mesh_no_eyes.faces)
 
     #delta_lmk = get_landmarks(exp_mesh.vertices) - get_landmarks(neutral_mesh.vertices)
