@@ -60,12 +60,12 @@ def callback():
     changed, ui_int = psim.SliderInt("Frame", ui_int, v_min=0, v_max=len(meshes)-1)
     if changed:
         ps.remove_all_structures()
-        register_surface(name=f'Step {ui_int} Ours', mesh=meshes[ui_int], idx_color=9, disp_vectors=None, disp_heatmap=None)
+        register_surface(name=f'Step {ui_int} Ours', mesh=meshes[ui_int], idx_color=1, disp_vectors=None, disp_heatmap=None)
 
 
 if __name__ == '__main__':
 
-    meshes_dir = '../datasets/preprocessed'
+    meshes_dir = './data/ex_multiface'
 
     l_mesh_dir = os.listdir(meshes_dir)
     l_mesh_dir.sort()
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     ps.set_ground_plane_mode("none")
     ps.set_ground_plane_height_factor(0)
 
-    register_surface(name=f'Step {0} Ours', mesh=meshes[0], idx_color=0, disp_vectors=None, disp_heatmap=None)
+    register_surface(name=f'Step {0} Ours', mesh=meshes[0], idx_color=1, disp_vectors=None, disp_heatmap=None)
 
     ps.set_user_callback(callback)
     ps.show()

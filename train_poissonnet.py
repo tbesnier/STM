@@ -270,7 +270,7 @@ def main():
     parser.add_argument('--out_channels', type=int, default=3)
 
     parser.add_argument('--n_points', type=int, default=3931)
-    parser.add_argument('--n_faces', type=int, default=10000) #9453  7800  10000
+    parser.add_argument('--n_faces', type=int, default=7800) #9453  7800  10000
 
     parser.add_argument('--batchnorm_encoder', type=str, default="GROUPNORM")
     parser.add_argument('--batchnorm_decoder', type=str, default="GROUPNORM")
@@ -278,9 +278,9 @@ def main():
 
     args = parser.parse_args()
 
-    #train(args)
-    #test(args)
-    infer_rmsh(args)
+    train(args)
+    test(args)
+    #infer_rmsh(args)
 
 if __name__ == "__main__":
     main()

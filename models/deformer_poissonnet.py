@@ -239,7 +239,7 @@ class PoissonNetAutoencoder(nn.Module):
                                             n_blocks=4,
                                             head='linear',
                                             extra_features=0,
-                                            outputs_at="faces")
+                                            outputs_at="vertices")
         # decoder
         #self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, self.latent_channels + 204), args=args)
 

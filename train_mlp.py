@@ -6,19 +6,17 @@ import torch.nn as nn
 import argparse
 from tqdm import tqdm
 
-from data_loader_diffusion import get_dataloader
-from models.deformer_diffusionnet import DiffusionNetAutoencoder
+from data_loader_mlp import get_dataloader
+from models.deformer_mlp import PointNet_MLP_AutoEncoder
 
 
 def train(args):
-    model = DiffusionNetAutoencoder(args).to(args.device)
+    model = PointNet_MLP_AutoEncoder(args).to(args.device)
 
     criterion = nn.MSELoss()
     criterion_val = nn.MSELoss()
 
     optim = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-
-    template_mesh = trimesh.load(args.template_file)
 
     starting_epoch = 0
     if args.load_model:
@@ -42,22 +40,12 @@ def train(args):
                     template = sample[1].to(args.device)
                     name = sample[2][0]
                     faces = sample[3].to(args.device)
-                    mass_template = sample[4].to(args.device)
-                    L_template = sample[5].to(args.device)
-                    evals_template = sample[6].to(args.device)
-                    evecs_template = sample[7].to(args.device)
-                    gradX_template = sample[8].to(args.device)
-                    gradY_template = sample[9].to(args.device)
-                    faces_template = sample[10].to(args.device)
-                    normals, normals_template = sample[11].to(args.device), sample[12].to(args.device)
-                    feats = sample[13].to(args.device)
-
+                    faces_template = sample[4].to(args.device)
+                    normals, normals_template = sample[5].to(args.device), sample[6].to(args.device)
+                    feats = sample[7].to(args.device)
                     in_features_template = torch.cat((template, normals_template), dim=2)
 
-                    vertices_pred = model.forward_latent_njf(
-                        in_features_template,
-                        mass_template, L_template, evals_template, evecs_template, gradX_template, gradY_template,
-                        faces_template, feats)
+                    vertices_pred = model.forward_latent_njf(in_features_template, feats)
 
                     t_test_loss += criterion_val(vertices_pred, vertices).item()
 
@@ -87,22 +75,12 @@ def train(args):
             template = sample[1].to(args.device)
             name = sample[2][0]
             faces = sample[3].to(args.device)
-            mass_template = sample[4].to(args.device)
-            L_template = sample[5].to(args.device)
-            evals_template = sample[6].to(args.device)
-            evecs_template = sample[7].to(args.device)
-            gradX_template = sample[8].to(args.device)
-            gradY_template = sample[9].to(args.device)
-            faces_template = sample[10].to(args.device)
-            normals, normals_template = sample[11].to(args.device), sample[12].to(args.device)
-            feats = sample[13].to(args.device)
-
+            faces_template = sample[4].to(args.device)
+            normals, normals_template = sample[5].to(args.device), sample[6].to(args.device)
+            feats = sample[7].to(args.device)
             in_features_template = torch.cat((template, normals_template), dim=2)
 
-            vertices_pred = model.forward_latent_njf(
-                in_features_template,
-                mass_template, L_template, evals_template, evecs_template, gradX_template, gradY_template,
-                faces_template, feats)
+            vertices_pred = model.forward_latent_njf(in_features_template, feats)
 
             optim.zero_grad()
 
@@ -123,7 +101,7 @@ def train(args):
 
 def test(args):
     dataset = get_dataloader(args)
-    model = DiffusionNetAutoencoder(args).to(args.device)
+    model = PointNet_MLP_AutoEncoder(args).to(args.device)
     checkpoint = torch.load(args.model_path, map_location=args.device)
     model.load_state_dict(checkpoint['autoencoder_state_dict'])
     metric = nn.MSELoss()
@@ -138,27 +116,17 @@ def test(args):
         for b, sample in pbar_talk:
             vertices = sample[0].to(args.device)
             template = sample[1].to(args.device)
+            name = sample[2][0]
             faces = sample[3].to(args.device)
-            mass_template = sample[4].to(args.device)
-            L_template = sample[5].to(args.device)
-            evals_template = sample[6].to(args.device)
-            evecs_template = sample[7].to(args.device)
-            gradX_template = sample[8].to(args.device)
-            gradY_template = sample[9].to(args.device)
-            faces_template = sample[10].to(args.device)
-            normals, normals_template = sample[11].to(args.device), sample[12].to(args.device)
-            feats = sample[13].to(args.device)
-
+            faces_template = sample[4].to(args.device)
+            normals, normals_template = sample[5].to(args.device), sample[6].to(args.device)
+            feats = sample[7].to(args.device)
             in_features_template = torch.cat((template, normals_template), dim=2)
 
-            vertices_pred = model.forward_latent_njf(
-                in_features_template,
-                mass_template, L_template, evals_template, evecs_template, gradX_template, gradY_template,
-                faces_template, feats)
+            vertices_pred = model.forward_latent_njf(in_features_template, feats)
 
             t_test_loss += metric(vertices_pred, vertices).item()
-            pbar_talk.set_description(
-                "TEST LOSS:{:.10f}".format((t_test_loss) / (b + 1)))
+            pbar_talk.set_description("TEST LOSS:{:.10f}".format((t_test_loss) / (b + 1)))
 
             os.makedirs(f'{args.results_path}/Meshes_test', exist_ok=True)
 
@@ -172,9 +140,8 @@ def test(args):
                 mesh.export(f'{args.results_path}/Meshes_targets/' + str(name)[:-4] + '.ply')
 
 def infer_rmsh(args):
-    import models.diffusion_net as diffusion_net
     source_mesh = trimesh.load(args.infer_test)
-    model = DiffusionNetAutoencoder(args).to(args.device)
+    model = PointNet_MLP_AutoEncoder(args).to(args.device)
     checkpoint = torch.load(args.model_path, map_location=args.device)
     model.load_state_dict(checkpoint['autoencoder_state_dict'])
 
@@ -204,24 +171,11 @@ def infer_rmsh(args):
         faces_template = torch.tensor(faces_template).unsqueeze(0).to(dtype=torch.int64, device=args.device)
         normals_template = torch.FloatTensor(source_mesh.vertex_normals).unsqueeze(0).to(args.device)
 
-        frame, mass_src, L, evals, evecs, gradX, gradY = diffusion_net.geometry.compute_operators(
-            torch.tensor(temp), faces=torch.tensor(source_mesh.faces), k_eig=args.k_eig)
-
-        mass_template = mass_src.float().to(args.device).unsqueeze(0)
-        L_template = L.float().to(args.device).unsqueeze(0)
-        evals_template = evals.float().to(args.device).unsqueeze(0)
-        evecs_template = evecs.float().to(args.device).unsqueeze(0)
-        gradX_template = gradX.float().to(args.device).unsqueeze(0)
-        gradY_template = gradY.float().to(args.device).unsqueeze(0)
-
         feats = target_feats.unsqueeze(0).to(args.device)
 
         in_features_template = torch.cat((template, normals_template), dim=2)
 
-        vertices_pred = model.forward_latent_njf(
-            in_features_template,
-            mass_template, L_template, evals_template, evecs_template, gradX_template, gradY_template,
-            faces_template, feats)
+        vertices_pred = model.forward_latent_njf(in_features_template, feats)
 
         os.makedirs(f'{args.results_path}/Meshes_infer_rmsh', exist_ok=True)
 
@@ -257,12 +211,12 @@ def main():
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
                                                               " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA")
-    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_njf")
+    parser.add_argument('--results_path', type=str, default="../Data/STM/test_shared_mlp")
 
     # checkpoint args
     parser.add_argument("--load_model", type=bool, default=False)
     parser.add_argument("--models_dir", type=str, default="../Data/STM/Models")
-    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_test_dn_njf.pth.tar")
+    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_test_shared_mlp.pth.tar")
 
     # model hyperparameters
     parser.add_argument('--latent_channels', type=int, default=128)

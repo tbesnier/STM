@@ -10,9 +10,9 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (needed for 3D projection)
 def show_point_cloud_with_edges(points,
                                 edges,
                                 point_size=5,
-                                edge_width=1.0,
+                                edge_width=2.0,
                                 point_color="tab:blue",
-                                edge_color="tab:gray",
+                                edge_color="black",
                                 equal_axes=True, target_points=None):
     """
     Display a 3D point cloud and edges.
@@ -51,7 +51,7 @@ def show_point_cloud_with_edges(points,
 
     if target_points is not None:
         ax.quiver3D(points[:, 0],points[:, 1], points[:,2],
-                    target_points[:, 0], target_points[:, 1], target_points[:, 2])
+                    target_points[:, 0], target_points[:, 1], target_points[:, 2], linewidths=2, length=2, arrow_length_ratio=0.5)
 
     # Plot edges
     for i, j in edges:
@@ -71,6 +71,7 @@ def show_point_cloud_with_edges(points,
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_zticks([])
+    ax.set_axis_off()
 
     plt.tight_layout()
     plt.show()
@@ -216,17 +217,18 @@ def closest_points_indices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
 if __name__ == "__main__":
     template_mesh = trimesh.load('./data/template.obj', process=False)
 
-    neutral_mesh = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_full/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
-    neutral_mesh_no_eyes = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
-    exp_mesh_no_eyes = trimesh.load("/media/tbesnier/T5 EVO/datasets/Face/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
+    #neutral_mesh = trimesh.load("../datasets/Face/COMA_full/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
+    neutral_mesh_no_eyes = trimesh.load("../datasets/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
+    exp_mesh_no_eyes = trimesh.load("../datasets/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
 
-    lmk_neutral = get_landmarks(neutral_mesh.vertices)
+    #lmk_neutral = get_landmarks(neutral_mesh.vertices)
     #print(lmk_neutral.shape)
     #show_point_cloud(lmk_neutral)
     #show_point_cloud_with_mesh(lmk_neutral, neutral_mesh.vertices, neutral_mesh.faces)
 
-    lmk_neutral_no_eyes_idx = closest_points_indices(np.array(neutral_mesh_no_eyes.vertices), lmk_neutral)
-    np.save("./data/lmk_noeyes_idx", lmk_neutral_no_eyes_idx)
+    #lmk_neutral_no_eyes_idx = closest_points_indices(np.array(neutral_mesh_no_eyes.vertices), lmk_neutral)
+    #np.save("./data/lmk_noeyes_idx", lmk_neutral_no_eyes_idx)
+    lmk_neutral_no_eyes_idx = np.load("./data/lmk_noeyes_idx.npy")
     lmk_neutral_no_eyes = np.array(neutral_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
     lmk_exp_no_eyes = np.array(exp_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
     edges = np.array([
@@ -238,7 +240,7 @@ if __name__ == "__main__":
         [48, 49], [49, 50], [50, 51], [51, 52], [52, 53], [53, 54], [54, 55], [55, 56], [56, 57], [57, 58], [58, 59], [59, 60], [60, 48],
         [60, 61], [61, 62], [62, 63], [63, 64], [64, 65], [65, 66], [66, 67], [67, 60]
     ])
-    show_point_cloud_with_edges(lmk_neutral_no_eyes, edges, point_size=15, target_points=lmk_exp_no_eyes - lmk_neutral_no_eyes)
+    show_point_cloud_with_edges(lmk_neutral_no_eyes, edges, point_size=25, target_points=lmk_exp_no_eyes - lmk_neutral_no_eyes)
     #show_point_cloud_with_mesh(lmk_neutral_no_eyes, neutral_mesh_no_eyes.vertices, neutral_mesh_no_eyes.faces)
 
     #delta_lmk = get_landmarks(exp_mesh.vertices) - get_landmarks(neutral_mesh.vertices)
