@@ -245,7 +245,7 @@ def main():
     # data args
     parser.add_argument('--template_file', type=str,
                         default='./data/template.obj')
-    parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
+    parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse_small')
     parser.add_argument('--infer_test', type=str, default='../datasets/COMA_exp_sparse_rmsh/arnold_aligned_ds.ply')
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"

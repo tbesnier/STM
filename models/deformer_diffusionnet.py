@@ -257,11 +257,11 @@ class DiffusionNetAutoencoder(nn.Module):
                                                          C_out=self.latent_channels,
                                                          C_width=128,
                                                          N_block=4,
-                                                         outputs_at='faces',
+                                                         outputs_at='vertices',
                                                          dropout=False,
                                                          normalization="None")
         # decoder
-        self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, 2*self.latent_channels + 204), args=args)
+        #self.decoder = njf_decoder(latent_features_shape=(self.bs, self.n_faces, 2*self.latent_channels + 204), args=args)
 
         self.last_layer = nn.Linear(128, 3)
         self.layers = [nn.Linear(self.latent_channels*2 + 204, 128),
@@ -317,12 +317,12 @@ class DiffusionNetAutoencoder(nn.Module):
         feat_field = torch.cat((feat_field_ca, z), dim=-1)
 
         # MLP decoder
-        #delta = self.mlp_dec(feat_field)
+        delta = self.mlp_dec(feat_field)
 
         # NJF decoder
-        delta, pred_jac = self.decoder.predict_map(feat_field, source_verts=template, source_faces=faces_template,
-                                        batch=False, target_vertices=None)
-        delta, pred_jac = delta.to(self.device), pred_jac.to(self.device)
+        #delta, pred_jac = self.decoder.predict_map(feat_field, source_verts=template, source_faces=faces_template,
+        #                                batch=False, target_vertices=None)
+        #delta, pred_jac = delta.to(self.device), pred_jac.to(self.device)
 
         pred = delta + template[:, :, :3]
         return pred

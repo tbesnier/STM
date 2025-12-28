@@ -5,8 +5,6 @@ from torch.utils import data
 import numpy as np
 from tqdm import tqdm
 import trimesh
-import Get_landmarks
-import pymeshlab
 
 import cholespy
 from torch.utils.data.dataloader import default_collate
