@@ -181,8 +181,8 @@ def infer_rmsh(args):
     epochs = checkpoint['epoch'] + 1
     print(epochs)
 
-    template_mesh = trimesh.load(f"/home/tbesnier/phd/projects/datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply", process=False)
-    target_exp= trimesh.load(f"/home/tbesnier/phd/projects/datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_mouth_extreme.ply", process=False)
+    template_mesh = trimesh.load(f"C:/Users/mrtho/phd/projects/datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply", process=False)
+    target_exp= trimesh.load(f"C:/Users/mrtho/phd/projects/datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_mouth_extreme.ply", process=False)
     ref_verts = np.array(template_mesh.vertices)
     lmk_idx = np.load("./data/lmk_noeyes_idx.npy")
 
@@ -194,8 +194,8 @@ def infer_rmsh(args):
     lmk_template = ref_verts[lmk_idx]
     target_feats = torch.FloatTensor(def_landmarks - lmk_template)
     #target_feats[51:57] = torch.zeros_like(target_feats[51:57])
-    target_feats[48:] = torch.zeros_like(target_feats[48:])
-    target_feats[0:14] = torch.zeros_like(target_feats[0:14])
+    #target_feats[48:] = torch.zeros_like(target_feats[48:])
+    #target_feats[0:14] = torch.zeros_like(target_feats[0:14])
 
     model.eval()
     with torch.no_grad():
@@ -232,6 +232,15 @@ def infer_rmsh(args):
         mesh = trimesh.Trimesh(vertices[0, :, :3].detach().cpu().numpy(), faces)
         mesh.export(f'{args.results_path}/Meshes_infer_rmsh/infer_target.ply')
 
+def infer_seq(args):
+    import models.diffusion_net as diffusion_net
+    source_mesh = trimesh.load(args.infer_test)
+    model = DiffusionNetAutoencoder(args).to(args.device)
+    checkpoint = torch.load(args.model_path, map_location=args.device)
+    model.load_state_dict(checkpoint['autoencoder_state_dict'])
+
+
+
 def main():
     parser = argparse.ArgumentParser(description='D2D: Dense to Dense Encoder-Decoder')
 
@@ -246,23 +255,30 @@ def main():
     parser.add_argument('--template_file', type=str,
                         default='./data/template.obj')
     parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
-    parser.add_argument('--infer_test', type=str, default="../datasets/COMA_exp_sparse_rmsh/arnold_aligned_ds.ply")#"/home/tbesnier/phd/projects/datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_mouth_extreme.ply")#'../datasets/COMA_exp_sparse_rmsh/neutral_rmsh.ply')
+    parser.add_argument('--meshes_path_ict', type=str, default='../datasets/ICT_exp_aligned')
+    parser.add_argument('--infer_test', type=str, default="../datasets/test_ICT.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
+    parser.add_argument('--infer_seq', type=str, default="./data/toy_example_stm/gt/S043_happy_2_021.npy")
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
-                                                              " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA")
-    parser.add_argument('--val_subjects', type=str, default="FaceTalk_170725_00137_TA")
+                                                              " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA"
+                                                              "id_000 id_001 id_002 id_003 id_004 id_005 id_006 id_007 id_008 id_009 id_010"
+                                                              "id_011 id_012 id_013 id_014 id_015 id_016 id_017 id_018 id_019 id_020 id_021"
+                                                              "id_022 id_023 id_024 id_025 id_026 id_027 id_028 id_029 id_030 id_031 id_032"
+                                                              "id_033 id_034 id_035 id_036 id_037 id_038 id_039 id_040 id_041 id_042"
+                                                              "id_041 id_042 id_043 id_044 id_045 id_046 id_047 id_048 id_049")
+    parser.add_argument('--val_subjects', type=str, default="FaceTalk_170725_00137_TA id_000")
     parser.add_argument('--test_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
                                                               " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA")
-    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_njf")
+    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp")
 
     # checkpoint args
     parser.add_argument("--load_model", type=bool, default=False)
     parser.add_argument("--models_dir", type=str, default="../Data/STM/Models")
-    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_test_dn_njf.pth.tar")
+    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp.pth.tar")
 
     # model hyperparameters
     parser.add_argument('--latent_channels', type=int, default=128)

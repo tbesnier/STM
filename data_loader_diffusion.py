@@ -136,6 +136,80 @@ def read_data(args, flag=None):
         if subject_id in subjects_dict["test"]:
             test_data.append(v)
 
+    meshes_path = args.meshes_path_ict
+
+    mass_template_dict = {}
+    L_template_dict = {}
+    evals_template_dict = {}
+    evecs_template_dict = {}
+    gradX_template_dict = {}
+    gradY_template_dict = {}
+    lmk_idx = np.array([1225, 1888, 1052, 367, 1719, 1722, 2199, 1447, 966, 3661, 4390, 3927, 3924, 2608, 3272, 4088, 3443, 268, 493, 1914, 2044, 1401, 3615, 4240, 4114, 2734, 2509, 978, 4527, 4942, 4857, 1140, 2075, 1147, 4269, 3360, 1507, 1542, 1537, 1528, 1518, 1511, 3742, 3751, 3756, 3721, 3725, 3732, 5708, 5695, 2081, 0, 4275, 6200, 6213, 6346, 6461, 5518, 5957, 5841, 5702, 5711, 5533, 6216, 6207, 6470, 5517, 5966])
+
+    for r, ds, fs in os.walk(meshes_path):
+        for f in tqdm(fs):
+            if f.endswith(".obj"):
+                key = f
+                data[key]["name"] = f
+
+                subject_id = "_".join(key.split("_")[:2])
+                print(subject_id)
+
+                template_mesh = trimesh.load(f"{meshes_path}/{subject_id}_neutral.obj", process=False)
+                temp = np.array(template_mesh.vertices)
+                lmk_template = temp[lmk_idx]
+
+                data[key]["template"] = temp
+                normals_template = np.array(template_mesh.vertex_normals)
+                data[key]["normals_template"] = normals_template
+
+                vertices_path_ = os.path.join(meshes_path, f)
+
+                frame, mass, L, evals, evecs, gradX, gradY = diffusion_net.geometry.compute_operators(
+                    torch.tensor(temp), faces=torch.tensor(template_mesh.faces), k_eig=args.k_eig)
+                mass_template_dict[subject_id] = mass
+                L_template_dict[subject_id] = L
+                evals_template_dict[subject_id] = evals
+                evecs_template_dict[subject_id] = evecs
+                gradX_template_dict[subject_id] = gradX
+                gradY_template_dict[subject_id] = gradY
+
+                data[key]["mass_template"] = mass_template_dict[subject_id]
+                data[key]["L_template"] = L_template_dict[subject_id]
+                data[key]["evals_template"] = evals_template_dict[subject_id]
+                data[key]["evecs_template"] = evecs_template_dict[subject_id]
+                data[key]["gradX_template"] = gradX_template_dict[subject_id]
+                data[key]["gradY_template"] = gradY_template_dict[subject_id]
+                data[key]["faces_template"] = torch.tensor(template_mesh.faces).to(dtype=torch.int64)
+
+                if not os.path.exists(vertices_path_):
+                    del data[key]
+                else:
+                    mesh = trimesh.load(vertices_path_)
+                    vertices = np.array(mesh.vertices)
+                    faces = np.array(mesh.faces)
+                    def_landmarks = vertices[lmk_idx]
+
+                    mesh = trimesh.Trimesh(vertices, faces)
+                    data[key]["vertices"] = vertices
+                    data[key]["normals"] = np.array(mesh.vertex_normals)
+                    data[key]["faces"] = torch.tensor(faces).to(dtype=torch.int64)
+
+                target_feats = def_landmarks - lmk_template
+
+                data[key]["feats"] = target_feats
+                feats_temp = np.hstack([temp, normals_template])
+                data[key]["feats_temp"] = feats_temp
+
+    for k, v in data.items():
+        subject_id = "_".join(k.split("_")[:2])
+        if subject_id in subjects_dict["train"]:
+            train_data.append(v)
+        if subject_id in subjects_dict["val"]:
+            valid_data.append(v)
+        if subject_id in subjects_dict["test"]:
+            test_data.append(v)
+
     print(len(train_data), len(valid_data), len(test_data))
 
     return train_data, valid_data, test_data, subjects_dict
