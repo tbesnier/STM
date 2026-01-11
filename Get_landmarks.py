@@ -217,30 +217,37 @@ def closest_points_indices(A: np.ndarray, B: np.ndarray) -> np.ndarray:
 if __name__ == "__main__":
     template_mesh = trimesh.load('./data/template.obj', process=False)
 
-    #neutral_mesh = trimesh.load("../datasets/Face/COMA_full/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
-    neutral_mesh_no_eyes = trimesh.load("../datasets/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
-    exp_mesh_no_eyes = trimesh.load("../datasets/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
+    neutral_mesh = trimesh.load("../ICT-FaceKit/sample_data_out/id_000_neutral.obj")
+    neutral_mesh_no_eyes = trimesh.load("../datasets/ICT_exp_aligned_small/id_000_neutral.obj")#trimesh.load("../datasets/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000001.ply")
+    exp_mesh_no_eyes = trimesh.load("../datasets/ICT_exp_aligned_small/id_000_Happy.obj")#trimesh.load("../datasets/COMA_noeyes/meshes/FaceTalk_170725_00137_TA/bareteeth/bareteeth.000030.ply")
 
     #lmk_neutral = get_landmarks(neutral_mesh.vertices)
     #print(lmk_neutral.shape)
     #show_point_cloud(lmk_neutral)
     #show_point_cloud_with_mesh(lmk_neutral, neutral_mesh.vertices, neutral_mesh.faces)
 
-    #lmk_neutral_no_eyes_idx = closest_points_indices(np.array(neutral_mesh_no_eyes.vertices), lmk_neutral)
-    #np.save("./data/lmk_noeyes_idx", lmk_neutral_no_eyes_idx)
-    lmk_neutral_no_eyes_idx = np.load("./data/lmk_noeyes_idx.npy")
-    lmk_neutral_no_eyes = np.array(neutral_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
-    lmk_exp_no_eyes = np.array(exp_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
-    edges = np.array([
-        [0, 1], [1, 2], [2,3], [3,4], [4,5], [5,6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16],
-        [17, 18], [18, 19], [19, 20], [20, 21], [22, 23], [23, 24], [24, 25], [25, 26],
-        [27, 28], [28, 29], [29, 30], [31, 32], [32, 33], [33, 34], [34, 35],
-        [36, 37], [37, 38], [38, 39], [39, 40], [40, 41], [41, 36],
-        [42, 43], [43, 44], [44, 45], [45, 46], [46, 47], [47, 42],
-        [48, 49], [49, 50], [50, 51], [51, 52], [52, 53], [53, 54], [54, 55], [55, 56], [56, 57], [57, 58], [58, 59], [59, 60], [60, 48],
-        [60, 61], [61, 62], [62, 63], [63, 64], [64, 65], [65, 66], [66, 67], [67, 60]
-    ])
-    show_point_cloud_with_edges(lmk_neutral_no_eyes, edges, point_size=25, target_points=lmk_exp_no_eyes - lmk_neutral_no_eyes)
+    lmk_base = np.array([1225, 1888, 1052, 367, 1719, 1722, 2199, 1447, 966, 3661, 4390, 3927, 3924, 2608, 3272, 4088, 3443, 268, 493, 1914, 2044, 1401, 3615, 4240, 4114, 2734, 2509, 978, 4527, 4942, 4857, 1140, 2075, 1147, 4269, 3360, 1507, 1542, 1537, 1528, 1518, 1511, 3742, 3751, 3756, 3721, 3725, 3732, 5708, 5695, 2081, 0, 4275, 6200, 6213, 6346, 6461, 5518, 5957, 5841, 5702, 5711, 5533, 6216, 6207, 6470, 5517, 5966
+])
+    lmk_neutral = neutral_mesh.vertices[lmk_base]
+    print(lmk_neutral)
+    lmk_neutral = 0.01 * np.array(lmk_neutral) + np.array([0.0, -0.01, -0.06])
+
+    lmk_neutral_no_eyes_idx = closest_points_indices(np.array(neutral_mesh_no_eyes.vertices), lmk_neutral)
+    show_point_cloud(neutral_mesh_no_eyes.vertices[lmk_neutral_no_eyes_idx])
+    np.save("./data/lmk_ds_ict", lmk_neutral_no_eyes_idx)
+    # lmk_neutral_no_eyes_idx = np.load("./data/lmk_noeyes_idx.npy")
+    # lmk_neutral_no_eyes = np.array(neutral_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
+    # lmk_exp_no_eyes = np.array(exp_mesh_no_eyes.vertices)[lmk_neutral_no_eyes_idx]
+    # edges = np.array([
+    #     [0, 1], [1, 2], [2,3], [3,4], [4,5], [5,6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16],
+    #     [17, 18], [18, 19], [19, 20], [20, 21], [22, 23], [23, 24], [24, 25], [25, 26],
+    #     [27, 28], [28, 29], [29, 30], [31, 32], [32, 33], [33, 34], [34, 35],
+    #     [36, 37], [37, 38], [38, 39], [39, 40], [40, 41], [41, 36],
+    #     [42, 43], [43, 44], [44, 45], [45, 46], [46, 47], [47, 42],
+    #     [48, 49], [49, 50], [50, 51], [51, 52], [52, 53], [53, 54], [54, 55], [55, 56], [56, 57], [57, 58], [58, 59], [59, 60], [60, 48],
+    #     [60, 61], [61, 62], [62, 63], [63, 64], [64, 65], [65, 66], [66, 67], [67, 60]
+    # ])
+    # show_point_cloud_with_edges(lmk_neutral_no_eyes, edges, point_size=25, target_points=lmk_exp_no_eyes - lmk_neutral_no_eyes)
     #show_point_cloud_with_mesh(lmk_neutral_no_eyes, neutral_mesh_no_eyes.vertices, neutral_mesh_no_eyes.faces)
 
     #delta_lmk = get_landmarks(exp_mesh.vertices) - get_landmarks(neutral_mesh.vertices)
