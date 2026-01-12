@@ -153,7 +153,6 @@ def read_data(args, flag=None):
                 data[key]["name"] = f
 
                 subject_id = "_".join(key.split("_")[:2])
-                print(subject_id)
 
                 template_mesh = trimesh.load(f"{meshes_path}/{subject_id}_neutral.obj", process=False)
                 temp = np.array(template_mesh.vertices)

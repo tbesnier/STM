@@ -255,7 +255,7 @@ def main():
     parser.add_argument('--template_file', type=str,
                         default='./data/template.obj')
     parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
-    parser.add_argument('--meshes_path_ict', type=str, default='../datasets/ICT_exp_aligned')
+    parser.add_argument('--meshes_path_ict', type=str, default='../datasets/ICT_exp_aligned_full')
     parser.add_argument('--infer_test', type=str, default="../datasets/test_ICT.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
     parser.add_argument('--infer_seq', type=str, default="./data/toy_example_stm/gt/S043_happy_2_021.npy")
 
@@ -272,7 +272,7 @@ def main():
     parser.add_argument('--test_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
-                                                              " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA")
+                                                              " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA id_048 id_049")
     parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp")
 
     # checkpoint args
@@ -295,9 +295,9 @@ def main():
 
     args = parser.parse_args()
 
-    train(args)
+    #train(args)
     test(args)
-    #infer_rmsh(args)
+    infer_rmsh(args)
 
 if __name__ == "__main__":
     main()
