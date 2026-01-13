@@ -296,7 +296,7 @@ def main():
     parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
     parser.add_argument('--meshes_path_ict', type=str, default='../datasets/ICT_exp_aligned_full')
     parser.add_argument('--infer_test', type=str, default="../datasets/test_ICT.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
-    parser.add_argument('--infer_seq', type=str, default="../datasets/ravdess/tracking_npy/Actor_01/01-01-01-01-01-01-01.npy")#"./data/ex_vocaset_lmk.npy")
+    parser.add_argument('--infer_seq', type=str, default="../datasets/ravdess/tracking_npy_aligned/Actor_01/01-02-03-01-01-01-01_aligned.npy")#"./data/ex_vocaset_lmk.npy")
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
