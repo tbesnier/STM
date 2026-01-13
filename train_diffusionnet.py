@@ -235,9 +235,48 @@ def infer_rmsh(args):
 def infer_seq(args):
     import models.diffusion_net as diffusion_net
     source_mesh = trimesh.load(args.infer_test)
+    temp = np.array(source_mesh.vertices)
+    faces_template = np.array(source_mesh.faces)
     model = DiffusionNetAutoencoder(args).to(args.device)
     checkpoint = torch.load(args.model_path, map_location=args.device)
     model.load_state_dict(checkpoint['autoencoder_state_dict'])
+
+    target_seq = np.load(args.infer_seq)
+    print(f"target_seq: {target_seq.shape}")
+    lmk_0 = target_seq[0]
+    os.makedirs(f'{args.results_path}/Meshes_infer_seq', exist_ok=True)
+
+    template = torch.FloatTensor(source_mesh.vertices).unsqueeze(0).to(args.device)
+    faces_template = torch.tensor(faces_template).unsqueeze(0).to(dtype=torch.int64, device=args.device)
+    normals_template = torch.FloatTensor(source_mesh.vertex_normals).unsqueeze(0).to(args.device)
+
+    frame, mass_src, L, evals, evecs, gradX, gradY = diffusion_net.geometry.compute_operators(
+        torch.tensor(temp), faces=torch.tensor(source_mesh.faces), k_eig=args.k_eig)
+
+    mass_template = mass_src.float().to(args.device).unsqueeze(0)
+    L_template = L.float().to(args.device).unsqueeze(0)
+    evals_template = evals.float().to(args.device).unsqueeze(0)
+    evecs_template = evecs.float().to(args.device).unsqueeze(0)
+    gradX_template = gradX.float().to(args.device).unsqueeze(0)
+    gradY_template = gradY.float().to(args.device).unsqueeze(0)
+
+    model.eval()
+    with torch.no_grad():
+        for i, frame in enumerate(target_seq):
+            target_feats = torch.FloatTensor(frame - lmk_0).unsqueeze(0).to(args.device)
+
+            #vertices = torch.FloatTensor(vertices).unsqueeze(0).to(args.device)
+            feats = target_feats
+
+            in_features_template = torch.cat((template, normals_template), dim=2)
+
+            vertices_pred = model.forward_latent_njf(
+                in_features_template,
+                mass_template, L_template, evals_template, evecs_template, gradX_template, gradY_template,
+                faces_template, feats)
+            mesh = trimesh.Trimesh(vertices_pred[0, :, :3].detach().cpu().numpy(),
+                                   faces_template[0].detach().cpu().numpy())
+            mesh.export(f'{args.results_path}/Meshes_infer_seq/frame_{str(i).zfill(3)}.ply')
 
 
 
@@ -257,7 +296,7 @@ def main():
     parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
     parser.add_argument('--meshes_path_ict', type=str, default='../datasets/ICT_exp_aligned_full')
     parser.add_argument('--infer_test', type=str, default="../datasets/test_ICT.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
-    parser.add_argument('--infer_seq', type=str, default="./data/toy_example_stm/gt/S043_happy_2_021.npy")
+    parser.add_argument('--infer_seq', type=str, default="../datasets/ravdess/tracking_npy/Actor_01/01-01-01-01-01-01-01.npy")#"./data/ex_vocaset_lmk.npy")
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
@@ -296,8 +335,9 @@ def main():
     args = parser.parse_args()
 
     #train(args)
-    test(args)
-    infer_rmsh(args)
+    #test(args)
+    #infer_rmsh(args)
+    infer_seq(args)
 
 if __name__ == "__main__":
     main()

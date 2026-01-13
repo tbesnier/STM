@@ -65,7 +65,7 @@ def callback():
 
 if __name__ == '__main__':
 
-    meshes_dir = './data/ex_multiface'
+    meshes_dir = '../Data/STM/test_dn_mlp/Meshes_infer_seq'
 
     l_mesh_dir = os.listdir(meshes_dir)
     l_mesh_dir.sort()
