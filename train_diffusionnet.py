@@ -232,7 +232,7 @@ def infer_rmsh(args):
         mesh = trimesh.Trimesh(vertices[0, :, :3].detach().cpu().numpy(), faces)
         mesh.export(f'{args.results_path}/Meshes_infer_rmsh/infer_target.ply')
 
-def infer_seq(args):
+def infer_seq(args, seq="positions"):
     import models.diffusion_net as diffusion_net
     source_mesh = trimesh.load(args.infer_test)
     temp = np.array(source_mesh.vertices)
@@ -240,10 +240,12 @@ def infer_seq(args):
     model = DiffusionNetAutoencoder(args).to(args.device)
     checkpoint = torch.load(args.model_path, map_location=args.device)
     model.load_state_dict(checkpoint['autoencoder_state_dict'])
-
     target_seq = np.load(args.infer_seq)
+    if target_seq.shape[-1] != 3:
+        target_seq = target_seq.reshape(target_seq.shape[0], 68, 3)
     print(f"target_seq: {target_seq.shape}")
-    lmk_0 = target_seq[0]
+    if seq == "positions":
+        lmk_0 = target_seq[0]
     os.makedirs(f'{args.results_path}/Meshes_infer_seq', exist_ok=True)
 
     template = torch.FloatTensor(source_mesh.vertices).unsqueeze(0).to(args.device)
@@ -263,7 +265,12 @@ def infer_seq(args):
     model.eval()
     with torch.no_grad():
         for i, frame in enumerate(target_seq):
-            target_feats = torch.FloatTensor(frame - lmk_0).unsqueeze(0).to(args.device)
+            if seq == "positions":
+                target_feats = torch.FloatTensor(frame - lmk_0).unsqueeze(0).to(args.device)
+            else:
+                target_feats = torch.FloatTensor(frame).unsqueeze(0).to(args.device)
+
+            print(target_feats.min(), target_feats.max())
 
             #vertices = torch.FloatTensor(vertices).unsqueeze(0).to(args.device)
             feats = target_feats
@@ -291,12 +298,11 @@ def main():
     parser.add_argument('--device', type=str, default="cuda:0")
 
     # data args
-    parser.add_argument('--template_file', type=str,
-                        default='./data/template.obj')
+    parser.add_argument('--template_file', type=str, default='./data/template.obj')
     parser.add_argument('--meshes_path', type=str, default='../datasets/COMA_exp_sparse')
     parser.add_argument('--meshes_path_ict', type=str, default='../datasets/ICT_exp_aligned_full')
     parser.add_argument('--infer_test', type=str, default="../datasets/test_ICT.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
-    parser.add_argument('--infer_seq', type=str, default="../datasets/ravdess/tracking_npy_aligned/Actor_01/01-02-03-01-01-01-01_aligned.npy")#"./data/ex_vocaset_lmk.npy")
+    parser.add_argument('--infer_seq', type=str, default="./data/ravdess/ex_happy_disp.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-03-02-02-01-01_aligned.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-05-02-02-02-01_aligned.npy")#"../datasets/MEAD/landmarks/W009_fear_3_028.npy")#ravdess/tracking_npy_aligned/Actor_01/01-02-03-01-01-01-01_aligned.npy")#"./data/ex_vocaset_lmk.npy")
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
@@ -337,7 +343,7 @@ def main():
     #train(args)
     #test(args)
     #infer_rmsh(args)
-    infer_seq(args)
+    infer_seq(args, seq="positions")
 
 if __name__ == "__main__":
     main()

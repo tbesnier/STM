@@ -65,7 +65,7 @@ def callback():
 
 if __name__ == '__main__':
 
-    meshes_dir = '../Data/STM/test_dn_mlp/Meshes_infer_seq'
+    meshes_dir = 'C:/Users/mrtho/phd/projects/ICT-FaceKit/Scripts/out_interp_eased'#'../Data/STM/test_dn_mlp/Meshes_infer_seq'
 
     l_mesh_dir = os.listdir(meshes_dir)
     l_mesh_dir.sort()
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     ps.set_ground_plane_height_factor(0)
 
     register_surface(name=f'Step {0} Ours', mesh=meshes[0], idx_color=1, disp_vectors=None, disp_heatmap=None)
+
 
     ps.set_user_callback(callback)
     ps.show()

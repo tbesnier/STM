@@ -23,7 +23,7 @@ def render(args):
         'dimgray', 'dimgrey', 'dodgerblue', '#000000'
     ]
 
-    meshes_dir = '../../papers/PaNDaS/comparison_videos/partial_MANO_scan' #'../Data/LISC/results_dual_MANO/MANO_anim'
+    meshes_dir = '../Data/STM/test_dn_mlp/Meshes_infer_seq' #'../Data/LISC/results_dual_MANO/MANO_anim'
     #meshes_dir = "/home/tbesnier/phd/projects/Data/VOCA/res/Results_Actor/Meshes50"
     mesh_list = [os.path.join(meshes_dir, os.listdir(meshes_dir)[i]) for i in range(len(os.listdir(meshes_dir)))]
     mesh_list.sort()

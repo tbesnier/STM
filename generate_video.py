@@ -133,7 +133,7 @@ def make_video_with_audio(ply_dir, wav_path, out_path="out.mp4", fps=30, width=1
     rim = pv.Light(light_type="scene light")
     rim.position = (0, -2, 2)
     rim.focal_point = (0, 0, 0)
-    rim.intensity = 0.4
+    rim.intensity = 0.0
     plotter.add_light(rim)
     # -----------------------------
 
@@ -192,7 +192,7 @@ def make_video_with_audio(ply_dir, wav_path, out_path="out.mp4", fps=30, width=1
 if __name__ == "__main__":
     # EDIT THESE:
     PLY_DIR = "../Data/STM/test_dn_mlp/Meshes_infer_seq"
-    WAV_PATH = "../datasets/VOCA_training/wav/FaceTalk_170725_00137_TA_sentence01.wav"
-    OUT_PATH = "test_simple_voca.mp4"
+    WAV_PATH = "D:/phd_data/ravdess/wav/01-02-03-02-02-01-01.wav"#01-02-05-02-02-02-01.wav"#"../datasets/MEAD/audio/W009_fear_3_028.wav" #"../datasets/VOCA_training/wav/FaceTalk_170725_00137_TA_sentence01.wav"
+    OUT_PATH = "test_pred_ravdess_happy.mp4"
 
-    make_video_with_audio(PLY_DIR, WAV_PATH, OUT_PATH, fps=60)
+    make_video_with_audio(PLY_DIR, WAV_PATH, OUT_PATH, fps=25)

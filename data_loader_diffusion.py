@@ -59,8 +59,6 @@ def read_data(args, flag=None):
     else:
         meshes_path = args.meshes_path_remesh
 
-    subject_id_list = []
-
     mass_template_dict = {}
     L_template_dict = {}
     evals_template_dict = {}

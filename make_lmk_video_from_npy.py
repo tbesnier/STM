@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 import pyvista as pv
 import imageio.v2 as imageio
-
+import trimesh
 
 def make_video(
     npy_path: str,
@@ -25,7 +25,7 @@ def make_video(
 ):
     seq = np.load(npy_path)  # (T, N, 3)
     if seq.ndim != 3 or seq.shape[-1] != 3:
-        raise ValueError(f"Expected shape (T, N, 3), got {seq.shape}")
+        seq = seq.reshape(seq.shape[0], 68, 3)
 
     T, N, _ = seq.shape
 
@@ -79,8 +79,8 @@ def make_video(
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--inp", default="../datasets/ravdess/tracking_npy_aligned/Actor_01/01-01-01-01-01-01-01_aligned.npy", help="Input .npy file with shape (T, N, 3)")
-    ap.add_argument("--out", default="./test_lmk_vid_bis.mp4", help="Output .mp4 path")
+    ap.add_argument("--inp", default="./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/tracking_npy_aligned/Actor_01/01-02-03-02-02-01-01_aligned.npy" )#"../datasets/MEAD/landmarks/W009_fear_3_028.npy", help="Input .npy file with shape (T, N, 3)")
+    ap.add_argument("--out", default="./test_lmk_vid_ravdess.mp4", help="Output .mp4 path")
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--point_size", type=float, default=15.0)
     ap.add_argument("--color", default="tomato")
