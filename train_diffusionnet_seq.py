@@ -240,8 +240,8 @@ def main():
     parser.add_argument('--templates_dir_ICT', type=str, default='D:/phd_data/ICT_templates')
     parser.add_argument('--deformations_dir_ICT', type=str, default='D:/phd_data/ICT_interp')
 
-    parser.add_argument('--infer_test', type=str, default="D:/phd_data/demo_mesh_arnold.ply")#"D:/phd_data/ICT_interp_full/id_049_neutral/frame_0000.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
-    parser.add_argument('--infer_seq', type=str, default="./data/ravdess/ex_happy_disp.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-03-02-02-01-01_aligned.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-05-02-02-02-01_aligned.npy")#"../datasets/MEAD/landmarks/W009_fear_3_028.npy")#ravdess/tracking_npy_aligned/Actor_01/01-02-03-01-01-01-01_aligned.npy")#"./data/ex_vocaset_lmk.npy")
+    parser.add_argument('--infer_test', type=str, default="D:/phd_data/ICT_interp_full/id_049_neutral/frame_0000.ply")#"D:/phd_data/demo_mesh_arnold.ply")#"D:/phd_data/ICT_interp_full/id_049_neutral/frame_0000.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
+    parser.add_argument('--infer_seq', type=str, default="./data/ravdess/ex_angry_disp.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-03-02-02-01-01_aligned.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-05-02-02-02-01_aligned.npy")#"../datasets/MEAD/landmarks/W009_fear_3_028.npy")#ravdess/tracking_npy_aligned/Actor_01/01-02-03-01-01-01-01_aligned.npy")#"./data/ex_vocaset_lmk.npy")
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
