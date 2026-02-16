@@ -65,7 +65,7 @@ def callback():
 
 if __name__ == '__main__':
 
-    meshes_dir = '../Data/STM/test_dn_mlp_seq/infer'
+    meshes_dir = "C:/Users/mrtho/phd/projects/ScanTalk/demo/Meshes"#'../Data/STM/test_dn_mlp_seq/infer'
 
     l_mesh_dir = os.listdir(meshes_dir)
     l_mesh_dir.sort()

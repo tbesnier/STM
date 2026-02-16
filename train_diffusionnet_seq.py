@@ -9,10 +9,26 @@ from tqdm import tqdm
 from dataloader_seq_diffusion import get_dataloader
 from models.deformer_seq_diffusionnet import DiffusionNetAutoencoder
 
+
+class Rec_Velocity_Loss(nn.Module):
+    def __init__(self):
+        super(Rec_Velocity_Loss, self).__init__()
+        self.mse = nn.MSELoss(reduction='none')
+
+    def forward(self, predictions, target):
+        rec_loss = torch.mean(self.mse(predictions, target))
+
+        prediction_shift = predictions[:, 1:, :] - predictions[:, :-1, :]
+        target_shift = target[:, 1:, :] - target[:, :-1, :]
+
+        vel_loss = torch.mean((self.mse(prediction_shift, target_shift)))
+
+        return rec_loss + 10*vel_loss
+
 def train(args):
     model = DiffusionNetAutoencoder(args).to(args.device)
 
-    criterion = nn.MSELoss()
+    criterion = Rec_Velocity_Loss()#nn.MSELoss()
     criterion_val = nn.MSELoss()
 
     optim = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -257,12 +273,12 @@ def main():
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
                                                               " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA id_048 id_049")
-    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp_seq")
+    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp_seq_velocity")
 
     # checkpoint args
     parser.add_argument("--load_model", type=bool, default=False)
     parser.add_argument("--models_dir", type=str, default="../Data/STM/Models")
-    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp_seq.pth.tar")
+    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp_seq_velocity.pth.tar")
 
     # model hyperparameters
     parser.add_argument('--latent_channels', type=int, default=128)
@@ -279,8 +295,8 @@ def main():
 
     args = parser.parse_args()
 
-    #train(args)
-    #test(args)
+    train(args)
+    test(args)
     #infer_rmsh(args)
     infer_seq(args, seq="disp")
 
