@@ -6,7 +6,7 @@ import torch.nn as nn
 import argparse
 from tqdm import tqdm
 
-from dataloader_seq_diffusion import get_dataloader
+from data_loader_seq_diffusion_with_voca import get_dataloader
 from models.deformer_seq_diffusionnet import DiffusionNetAutoencoder
 
 
@@ -23,7 +23,7 @@ class Rec_Velocity_Loss(nn.Module):
 
         vel_loss = torch.mean((self.mse(prediction_shift, target_shift)))
 
-        return rec_loss + 10*vel_loss
+        return rec_loss + 1*vel_loss
 
 def train(args):
     model = DiffusionNetAutoencoder(args).to(args.device)
@@ -86,6 +86,10 @@ def train(args):
                     valid_loss_log.append(np.mean(t_test_loss))
                 current_loss = np.mean(valid_loss_log)
                 val_losses.append(current_loss)
+                torch.save({'epoch': epoch,
+                            'autoencoder_state_dict': model.state_dict(),
+                            'optimizer_state_dict': optim.state_dict(),
+                            }, args.model_path)
 
         loss_log = []
         model.train()
@@ -243,7 +247,7 @@ def main():
 
     parser.add_argument("--lr", type=float, default=0.0001, help='learning rate')
     parser.add_argument('--weight_decay', type=float, default=0)
-    parser.add_argument('--epochs', type=float, default=300)
+    parser.add_argument('--epochs', type=float, default=200)
     parser.add_argument('--batch_size', type=float, default=1)
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--device', type=str, default="cuda:0")
@@ -253,6 +257,8 @@ def main():
 
     parser.add_argument('--templates_dir_COMA', type=str, default='D:/phd_data/COMA_templates')
     parser.add_argument('--deformations_dir_COMA', type=str, default='D:/phd_data/COMA_interp')
+    parser.add_argument('--templates_dir_VOCA', type=str, default='D:/phd_data/VOCA_training/templates_no_eyes')
+    parser.add_argument('--deformations_dir_VOCA', type=str, default='D:/phd_data/VOCA_training/ply_no_eyes')
     parser.add_argument('--templates_dir_ICT', type=str, default='D:/phd_data/ICT_templates')
     parser.add_argument('--deformations_dir_ICT', type=str, default='D:/phd_data/ICT_interp')
 
@@ -273,12 +279,12 @@ def main():
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
                                                               " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA id_048 id_049")
-    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp_seq_velocity")
+    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp_seq_velocity_with_voca")
 
     # checkpoint args
     parser.add_argument("--load_model", type=bool, default=False)
     parser.add_argument("--models_dir", type=str, default="../Data/STM/Models")
-    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp_seq_velocity.pth.tar")
+    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp_seq_velocity_with_voca.pth.tar")
 
     # model hyperparameters
     parser.add_argument('--latent_channels', type=int, default=128)
