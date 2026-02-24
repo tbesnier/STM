@@ -32,7 +32,6 @@ class njf_decoder(nn.Module):
         super().__init__()
         self.args = args
         self.latent_size = latent_features_shape[-1]
-        self.n_faces = args.n_faces
 
         layer_normalization = self.get_layer_normalization_type()
         if layer_normalization == "IDENTITY":
@@ -146,7 +145,7 @@ class njf_decoder(nn.Module):
         #x = x.permute(0, 2, 1)
         return self.per_face_decoder(x.type(self.per_face_decoder[0].bias.type()))
 
-    def predict_jacobians(self, latent_features):
+    def predict_jacobians(self, latent_features, n_faces):
         '''
 		given a batch class, predict jacobians
 		:param single_source_batch: batch object
@@ -155,9 +154,9 @@ class njf_decoder(nn.Module):
         # extract the encoding of the source and target
         #codes = self.extract_code(source, target)
         # get the network predictions, a BxTx3x3 tensor of 3x3 jacobians, per T tri, per B target in batch
-        return self.predict_jacobians_from_codes(latent_features)
+        return self.predict_jacobians_from_codes(latent_features, n_faces)
 
-    def predict_jacobians_from_codes(self, latent_features):
+    def predict_jacobians_from_codes(self, latent_features, n_faces):
         '''
 		predict jacobians w.r.t give global codes and the batch
 		:param codes: codes for each source/target in batch
@@ -178,16 +177,16 @@ class njf_decoder(nn.Module):
 
         res = self.forward(stacked)
         #res = res.transpose(1,2).contiguous()
-        res = res.view(latent_features.shape[0],self.n_faces,-1)
+        res = res.view(latent_features.shape[0],n_faces,-1)
         # because of stacking the result is a 9-entry vec for each (z_i|c_j), now let's turn it to a batch x tris x 9 tensor
         pred_J = res  #net_input.back_to_non_stacked(res)
         # and now reshape 9 to 3x3
         ret = pred_J.reshape(pred_J.shape[0], pred_J.shape[1], 3, 3)
         # if we apply a global transformation
-        if self.__global_trans:
-            glob = self.global_decoder(codes)
-            glob = glob.reshape(glob.shape[0], 3, 3).unsqueeze(1)
-            ret = torch.matmul(glob, ret)
+        # if self.__global_trans:
+        #     glob = self.global_decoder(codes)
+        #     glob = glob.reshape(glob.shape[0], 3, 3).unsqueeze(1)
+        #     ret = torch.matmul(glob, ret)
         # if we chose to have the identity as the result when the prediction is 0,
         if self.__IDENTITY_INIT:
             for i in range(0, 3):
@@ -218,42 +217,28 @@ class njf_decoder(nn.Module):
         GT_J_restricted = source.restrict_jacobians(GT_J)
         return GT_V, GT_J, GT_J_restricted
 
-    def predict_map(self, latent_features, source_verts, source_faces,  batch=False,
-                    target_vertices=None):
-        pred_J = self.predict_jacobians(latent_features)
-        if not batch:
-            source = SourceMesh(source_v=source_verts, source_f=source_faces, use_wks=False, random_centering=False, cpuonly=False)
-            source.load(source_v=source_verts, source_f=source_faces)
-            pred_V = source.vertices_from_jacobians(pred_J)
-
-        else:
-            L = []
-            GT_Jac = []
-            GT_Jac_restricted = []
-            Jac_restricted = []
-            for i in range(self.bs):
-                source = SourceMesh(source_v=source_verts[i], source_f=source_faces[i], use_wks=False, random_centering=False,
-                                    cpuonly=False)
-                source.load(source_v=source_verts[i].unsqueeze(0), source_f=source_faces[i].unsqueeze(0))
-                pred_V = source.vertices_from_jacobians(pred_J[i].unsqueeze(0))
-                #GT_V, GT_J, GT_J_restricted = self.get_gt_map(source, target_vertices[i].unsqueeze(0))
-                J_restricted = source.restrict_jacobians(pred_J[i].unsqueeze(0))
-                L.append(pred_V)
-                #GT_Jac.append(GT_J)
-                #GT_Jac_restricted.append(GT_J_restricted)
-                Jac_restricted.append(J_restricted)
-            #GT_J = torch.stack(GT_Jac, dim=1).squeeze(0)
-            #GT_J_restricted = torch.stack(GT_Jac_restricted, dim=1).squeeze(0)
-            #J_restricted = torch.stack(Jac_restricted, dim=1).squeeze(0)
-            pred_V = torch.stack(L, dim=1).squeeze(0)
-            return pred_V, pred_J
-
-        if target_vertices is not None:
-            GT_V, GT_J, GT_J_restricted = self.get_gt_map(source, target_vertices)
-            return pred_V, pred_J, GT_J
-        else:
-            return pred_V, pred_J
-
+    def predict_map(self, latent_features, source_verts, source_faces,  batch=False):
+        n_faces = source_faces.shape[-2]
+        pred_J = self.predict_jacobians(latent_features, n_faces)
+        #if not batch:
+        source = SourceMesh(source_v=source_verts, source_f=source_faces, use_wks=False, random_centering=False, cpuonly=False)
+        source.load(source_v=source_verts, source_f=source_faces)
+        pred_V = source.vertices_from_jacobians(pred_J)
+        return pred_V, pred_J
+        # else:
+        #     L = []
+        #
+        #     Jac_restricted = []
+        #     for i in range(self.bs):
+        #         source = SourceMesh(source_v=source_verts[i], source_f=source_faces[i], use_wks=False, random_centering=False,
+        #                             cpuonly=False)
+        #         source.load(source_v=source_verts[i].unsqueeze(0), source_f=source_faces[i].unsqueeze(0))
+        #         pred_V = source.vertices_from_jacobians(pred_J[i].unsqueeze(0))
+        #         J_restricted = source.restrict_jacobians(pred_J[i].unsqueeze(0))
+        #         L.append(pred_V)
+        #         Jac_restricted.append(J_restricted)
+        #     pred_V = torch.stack(L, dim=1).squeeze(0)
+        #     return pred_V, pred_J
 
     def check_map(self, source, target, GT_J, GT_V):
         pred_V = source.vertices_from_jacobians(GT_J)

@@ -65,7 +65,8 @@ def callback():
 
 if __name__ == '__main__':
 
-    meshes_dir = "D:/EmoScanTalk/comparisons/ours/voca/Meshes/FaceTalk_170809_00138_TA_sentence40"#"C:/Users/mrtho/phd/projects/ScanTalk/demo/Meshes"#'../Data/STM/test_dn_mlp_seq/infer'
+    meshes_dir = "../Data/STM/test_dn_mlp_seq_with/infer"
+    #meshes_dir = "D:/EmoScanTalk/comparisons/ours/voca/Meshes/FaceTalk_170809_00138_TA_sentence40"#"C:/Users/mrtho/phd/projects/ScanTalk/demo/Meshes"#'../Data/STM/test_dn_mlp_seq/infer'
     #meshes_dir = "D:/phd_data/VOCA_training/ply_no_eyes/FaceTalk_170731_00024_TA_sentence01"
 
     l_mesh_dir = os.listdir(meshes_dir)

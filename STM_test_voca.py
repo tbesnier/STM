@@ -106,7 +106,7 @@ def main():
     # checkpoint args
     parser.add_argument("--load_model", type=bool, default=False)
     parser.add_argument("--models_dir", type=str, default="../Data/STM/Models")
-    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp_seq_velocity_with_voca.pth.tar")
+    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_njf_seq_velocity_with_voca_ict_crop.pth.tar")
 
     # model hyperparameters
     parser.add_argument('--latent_channels', type=int, default=128)

@@ -23,7 +23,7 @@ class Rec_Velocity_Loss(nn.Module):
 
         vel_loss = torch.mean((self.mse(prediction_shift, target_shift)))
 
-        return rec_loss + 1*vel_loss
+        return rec_loss + vel_loss
 
 def train(args):
     model = DiffusionNetAutoencoder(args).to(args.device)
@@ -31,7 +31,7 @@ def train(args):
     criterion = Rec_Velocity_Loss()#nn.MSELoss()
     criterion_val = nn.MSELoss()
 
-    optim = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optim = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     starting_epoch = 0
     if args.load_model:
@@ -200,7 +200,6 @@ def infer_seq(args, seq="positions"):
     print(f"target_seq: {target_seq.shape}")
     if seq == "positions":
         lmk_0 = target_seq[0]
-    os.makedirs(f'{args.results_path}/Meshes_infer_seq', exist_ok=True)
 
     template = torch.FloatTensor(source_mesh.vertices).unsqueeze(0).to(args.device)
     faces_template = torch.tensor(faces_template).unsqueeze(0).to(dtype=torch.int64, device=args.device)
@@ -234,6 +233,12 @@ def infer_seq(args, seq="positions"):
             faces_template, target_feats_seq.unsqueeze(0))
 
         os.makedirs(f'{args.results_path}/infer/', exist_ok=True)
+        folder_path = f'{args.results_path}/infer/'
+
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
 
         for i in range(vertices_pred.shape[0]):
             mesh = trimesh.Trimesh(vertices_pred[i, :, :3].cpu().detach().numpy(),
@@ -246,7 +251,7 @@ def main():
     parser = argparse.ArgumentParser(description='D2D: Dense to Dense Encoder-Decoder')
 
     parser.add_argument("--lr", type=float, default=0.0001, help='learning rate')
-    parser.add_argument('--weight_decay', type=float, default=0)
+    parser.add_argument('--weight_decay', type=float, default=0.0001)
     parser.add_argument('--epochs', type=float, default=200)
     parser.add_argument('--batch_size', type=float, default=1)
     parser.add_argument('--num_workers', type=int, default=0)
@@ -262,7 +267,7 @@ def main():
     parser.add_argument('--templates_dir_ICT', type=str, default='D:/phd_data/ICT_templates')
     parser.add_argument('--deformations_dir_ICT', type=str, default='D:/phd_data/ICT_interp')
 
-    parser.add_argument('--infer_test', type=str, default="D:/phd_data/ICT_interp_full/id_049_neutral/frame_0000.ply")#"D:/phd_data/demo_mesh_arnold.ply")#"D:/phd_data/ICT_interp_full/id_049_neutral/frame_0000.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
+    parser.add_argument('--infer_test', type=str, default="D:/phd_data/thanos.ply")#"D:/phd_data/ICT_interp_full/id_049_neutral/frame_0000.ply")#"../datasets/COMA_exp_sparse/FaceTalk_170725_00137_TA_neutral_no_eyes.ply")#"../datasets/test_ICT.ply")
     parser.add_argument('--infer_seq', type=str, default="./data/ravdess/ex_angry_disp.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-03-02-02-01-01_aligned.npy")#"./data/ravdess/ex_happy_disp.npy")#"D:/phd_data/ravdess/lmks_npy_aligned/Actor_01/01-02-05-02-02-02-01_aligned.npy")#"../datasets/MEAD/landmarks/W009_fear_3_028.npy")#ravdess/tracking_npy_aligned/Actor_01/01-02-03-01-01-01-01_aligned.npy")#"./data/ex_vocaset_lmk.npy")
 
     parser.add_argument('--train_subjects', type=str, default="FaceTalk_170725_00137_TA FaceTalk_170728_03272_TA FaceTalk_170731_00024_TA"
@@ -279,12 +284,12 @@ def main():
                                                               " FaceTalk_170809_00138_TA FaceTalk_170811_03274_TA FaceTalk_170811_03275_TA"
                                                               " FaceTalk_170904_00128_TA FaceTalk_170904_03276_TA FaceTalk_170908_03277_TA"
                                                               " FaceTalk_170912_03278_TA FaceTalk_170913_03279_TA FaceTalk_170915_00223_TA id_048 id_049")
-    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_mlp_seq_velocity_with_voca")
+    parser.add_argument('--results_path', type=str, default="../Data/STM/test_dn_njf_seq_velocity_with_voca_ict_crop")
 
     # checkpoint args
     parser.add_argument("--load_model", type=bool, default=False)
     parser.add_argument("--models_dir", type=str, default="../Data/STM/Models")
-    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_mlp_seq_velocity_with_voca.pth.tar")
+    parser.add_argument("--model_path", type=str, default="../Data/STM/Models/STM_dn_njf_seq_velocity_with_voca_ict_crop.pth.tar")
 
     # model hyperparameters
     parser.add_argument('--latent_channels', type=int, default=128)
